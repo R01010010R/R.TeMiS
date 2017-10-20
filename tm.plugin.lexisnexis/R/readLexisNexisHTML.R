@@ -82,6 +82,23 @@ readLexisNexisHTML <- FunctionGenerator(function(elem, language, id) {
         # English uses the first format, French the second one
         date <- strptime(strdate, "%B %d %Y")
         if(is.na(date)) date <- strptime(strdate, "%d %B %Y")
+        ## German date if still NA
+        if(is.na(date) && strdate != "") {
+            ## Try de_DE.UTF8 locale. Remove anything before %d and
+            ## behind %Y for some German newspapers that use %d. %B %Y
+            date1 <- sub('[^0-9]*','',date1)
+            date1 <- sub('\\D+$','',date1)
+            date2 <- sub('[^0-9]*','',date2)
+            date2 <- sub('\\D+$','',date2)
+            date.split <- strsplit(paste(date1[1], date2[1]), " ")[[1]]
+            date.split <- date.split[date.split != ""]
+            strdate <- paste(gsub(",| ", "", date.split[1]), gsub(",| ", "", date.split[2]), gsub(",| ", "", date.split[3]))
+            old.locale <- Sys.getlocale("LC_TIME")
+            Sys.setlocale("LC_TIME", "de_DE.UTF-8")
+            date <- strptime(strdate, "%d. %B %Y")
+            Sys.setlocale("LC_TIME", old.locale)
+        }
+        ## C locale if still NA
         if(is.na(date) && strdate != "") {
             # Try C locale, just in case
             old.locale <- Sys.getlocale("LC_TIME")
